@@ -60,13 +60,15 @@ module aero_oslo_optics
   !> Aerosol state specific to this model
   type, extends(state_t) :: aero_oslo_state_t
     private
+    real(kind=rk), allocatable :: mixed_type_
+    real(kind=rk), allocatable :: od_work_(:)
     real(kind=rk), allocatable :: Nnatk_(:,:,:) ! number concentration
   end type aero_oslo_state_t
 
 
 
 
-  interface my_model_t
+  interface aero_oslo_t
     module procedure :: constructor
   end interface
 
@@ -98,7 +100,7 @@ contains
     real(kind=rk) :: wave_numbers(4) ! [m-1]
     class(array_t), pointer :: interfaces
 
-    integer :: i, netcdf_file
+    integer :: i, netcdf_file, k
 #ifdef AERO_USE_NETCDF
     ! access NetCDF data
     if( len_trim( description_file ) > 0 ) then
@@ -125,13 +127,13 @@ contains
     model%nbands_ = 14
     ! Load the averaged optical properties from
     ! https://acp.copernicus.org/articles/18/7815/2018/acp-18-7815-2018-f03.pdf
-    allocate( model%tau_(  model%pcols, model%pver ,interfaces%size()   ) )
-    allocate( model%omega_( model%pcols, model%pver ,interfaces%size()  ) )
-    allocate( model%g_(    model%pcols, model%pver ,interfaces%size()  ) )
+    allocate( model%tau_(  model%pcols_, model%pver_ ,interfaces%size()   ) )
+    allocate( model%omega_( model%pcols_, model%pver_ ,interfaces%size()  ) )
+    allocate( model%g_(    model%pcols_, model%pver_ ,interfaces%size()  ) )
     
     ! TODO: The wavelenghts need to match the ones used by pmxsub_light...
-    do k=1, model%pver
-      do i=1, model%pcols
+    do k=1, model%pver_
+      do i=1, model%pcols_
         model%tau_(i,k,:)   = (/ 0.27_rk,  0.35_rk,   0.5_rk, 0.75_rk /)
         model%omega_(i,k,:) = (/ 0.88_rk, 0.895_rk, 0.905_rk, 0.88_rk /)
         model%g_(i,k,:)     = (/  0.3_rk, 0.035_rk, 0.045_rk, 0.09_rk /)
@@ -157,11 +159,11 @@ contains
   function create_state( this ) result( state )
 
     class(state_t),    pointer    :: state
-    class(my_model_t), intent(in) :: this
+    class(aero_oslo_t), intent(in) :: this
 
-    allocate( my_state_t :: state )
+    allocate( aero_oslo_state_t  :: state )
     select type( state )
-    class is( my_state_t )
+    class is( aero_oslo_state_t )
 
       !! create a working array for use in calculating optical properties
       allocate( state%od_work_( size( this%tau_ ) ) )
@@ -182,7 +184,7 @@ contains
     !> Copy of optical property wave number grid
     type(grid_t) :: optics_grid
     !> My aerosol model
-    class(my_model_t), intent(in) :: this
+    class(aero_oslo_t), intent(in) :: this
 
     optics_grid = this%grid_%clone( )
 
@@ -197,7 +199,7 @@ contains
     use aero_array,                    only : array_t
 
     !> My aerosol model
-    class(my_model_t), intent(inout) :: this
+    class(aero_oslo_t), intent(inout) :: this
     !> Aerosol state
     class(state_t),    intent(inout) :: state
     !> Aerosol optical depth [m]
@@ -208,23 +210,23 @@ contains
     class(array_t),    intent(inout) :: od_asym
 
     select type( state )
-    class is( my_state_t )
+    class is( aero_oslo_state_t )
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !! Calculate optical properties for the current aerosol state here !!
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       ! aerosol optical depth
-      !state%od_work_(:) = state%mixed_type_ * this%tau_(:)
-      !call od%copy_in( state%od_work_ )
+      state%od_work_(:) = state%mixed_type_ * this%tau_(1,1,:)
+      call od%copy_in( state%od_work_ )
 
       ! aerosol scattering optical depth
-      !state%od_work_(:) = state%od_work_(:) * this%omega_(:)
-      !call od_ssa%copy_in( state%od_work_ )
+      state%od_work_(:) = state%od_work_(:) * this%omega_(1,1,:)
+      call od_ssa%copy_in( state%od_work_ )
 
       ! aerosol asymmetric scattering optical depth
-      !state%od_work_(:) = state%od_work_(:) * this%g_(:)
-      !call od_asym%copy_in( state%od_work_ )
+      state%od_work_(:) = state%od_work_(:) * this%g_(1,1,:)
+      call od_asym%copy_in( state%od_work_ )
 
     end select
 
@@ -232,4 +234,4 @@ contains
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-end module my_model
+end module aero_oslo_optics
