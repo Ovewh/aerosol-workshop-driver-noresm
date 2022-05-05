@@ -1,5 +1,5 @@
 
-module pmxsub_mod
+module pmxsub
 
   implicit none
   private
@@ -170,4 +170,4 @@ contains
     end do 
 
   end subroutine pmxsub_light
-end module pmxsub_mod
+end module pmxsub

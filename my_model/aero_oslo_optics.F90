@@ -12,7 +12,7 @@ module aero_oslo_optics
   use aero_grid,                       only : grid_t
   use aero_model,                      only : model_t
   use aero_state,                      only : state_t
-  !use pmxsub_light
+  use pmxsub
 
   implicit none
   private
@@ -130,7 +130,6 @@ contains
     allocate( model%tau_(  model%pcols_, model%pver_ ,interfaces%size()   ) )
     allocate( model%omega_( model%pcols_, model%pver_ ,interfaces%size()  ) )
     allocate( model%g_(    model%pcols_, model%pver_ ,interfaces%size()  ) )
-    
     ! TODO: The wavelenghts need to match the ones used by pmxsub_light...
     do k=1, model%pver_
       do i=1, model%pcols_
@@ -217,16 +216,7 @@ contains
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       ! aerosol optical depth
-      state%od_work_(:) = state%mixed_type_ * this%tau_(1,1,:)
-      call od%copy_in( state%od_work_ )
-
-      ! aerosol scattering optical depth
-      state%od_work_(:) = state%od_work_(:) * this%omega_(1,1,:)
-      call od_ssa%copy_in( state%od_work_ )
-
-      ! aerosol asymmetric scattering optical depth
-      state%od_work_(:) = state%od_work_(:) * this%g_(1,1,:)
-      call od_asym%copy_in( state%od_work_ )
+      call pmxsub_light(this%lchnk_,this%pcols_,this%pver_,this%pcols_,state%Nnatk_,this%tau_, this%omega_, this%g_)
 
     end select
 
