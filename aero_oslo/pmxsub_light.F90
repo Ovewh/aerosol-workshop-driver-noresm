@@ -3,19 +3,19 @@ module pmxsub_mod
 
   implicit none
   private
-  public :: pmxsub
+  public :: pmxsub_light
 
 
 contains
 
-  subroutine pmxsub(lchnk,pcols,pver,ncol,per_tau, per_tau_w, per_tau_w_g)
+  subroutine pmxsub_light(lchnk,pcols,pver,ncol,Nnatk,per_tau, per_tau_w, per_tau_w_g)
 
 
     use opttab
     use opttab_lw
     use optinterpol, only: interpol5to10
     ! input arguments
-    
+    ! TODO move files a own noresm directory and then include it in my model. Edit CMAKE sciprt
     integer, intent(in) :: lchnk 
     integer, intent(in) :: pver
     integer, intent(in) :: pcols
@@ -47,19 +47,38 @@ contains
     real(r8) xrh(pcols,pver)
     real(r8) fnbc(pcols,pver), faitbc(pcols,pver), f_so4_cond(pcols,pver), &
     f_soa(pcols,pver),f_soana(pcols,pver), vnbc, vaitbc
-    real(r8) xfbcbg(pcols,pver), xfbcbgn(pcols,pver)
-    real(r8) xfombg(pcols,pver)
+    real(r8) xfbcbg(pcols,pver), xfbcbgn(pcols,pver), ifbcbgn1(pcols,pver)
+    real(r8) xfombg(pcols,pver), ifombg1(pcols,pver)
     real(r8) rhum(pcols,pver)       ! (trimmed) relative humidity for the aerosol calculations
-    
+    integer  irh1(pcols,pver)
+    real(r8) focm(pcols,pver,4)
+    real(r8) Cam(pcols,pver,nbmodes), fcm(pcols,pver,nbmodes)
+    integer ict1(pcols,pver,nmodes)
+    real(r8) xfac(pcols,pver,nbmodes)
+    integer ifac1(pcols,pver,nbmodes)
+    real(r8) xfbc(pcols,pver,nbmodes)
+    integer ifbc1(pcols,pver,nbmodes)
+    real(r8) xfaq(pcols,pver,nbmodes)
+    integer ifaq1(pcols,pver,nbmodes)
     ! Set local variables that are not used to zero
     do k=1,pver
       do icol=1,ncol
+        do ib=1,nbmodes
+          Cam(icol,k,ib)=0.0_r8
+          fcm(icol,k,ib)=0.0_r8
+          faqm(icol,k,ib)=0.0_r8
+          fbcm(icol,k,ib)=0.0_r8
+        end do
         rhum(icol, k)=0.0_r8
         fnbc(icol, k)=0.0_r8
         faitbc(icol,k)=0.0_r8
         f_soana(icol,k)=0.0_r8
+        rhum(icol, k)=0.0_r8
+
       end do
     end do
+  
+
     do icol=1,ncol
       daylight(icol) = .true. 
     end do
@@ -138,5 +157,5 @@ contains
         end do
     end do 
 
-  end subroutine pmxsub
+  end subroutine pmxsub_light
 end module pmxsub_mod
