@@ -75,7 +75,7 @@ module opttab
 
  contains
 
-subroutine initopt
+subroutine initopt(aerotab_table_dir)
 
 !---------------------------------------------------------------
 !   Modified by Egil Storen/NoSerC July 2002.
@@ -88,8 +88,6 @@ subroutine initopt
 !   by Alf Kirkevaag in December 2013, and for SOA in August 2015.
 !---------------------------------------------------------------
 
-      use oslo_control, only : oslo_getopts, dir_string_length
-
       implicit none
 
       integer kcomp, iwl, irelh, ictot, ifac, ifbc, ifaq, i, irf
@@ -101,7 +99,8 @@ subroutine initopt
       real(r8) :: eps3 = 1.e-3_r8
       real(r8) :: eps4 = 1.e-4_r8
       real(r8) :: eps6 = 1.e-6_r8
-      character(len=dir_string_length) :: aerotab_table_dir
+      integer, parameter,public :: dir_string_length=256
+      character(len=dir_string_length), intent(in) :: aerotab_table_dir
 
 !     Defining array bounds for tabulated optical parameters (and r and sigma) 
 !     relative humidity (only 0 value used for r and sigma tables):
@@ -166,7 +165,6 @@ subroutine initopt
         end do
       end do
 
-      call oslo_getopts(aerotab_table_dir_out= aerotab_table_dir)
 
 !     Opening the 'kcomp'-files:
 
