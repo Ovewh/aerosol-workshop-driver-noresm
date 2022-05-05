@@ -48,7 +48,7 @@ subroutine initopt_lw
 !   and for SOA in August 2015.
 !---------------------------------------------------------------
 
-    use oslo_control, only: oslo_getopts, dir_string_length
+    use get_path
 
 
 !   implicit none
@@ -66,7 +66,7 @@ subroutine initopt_lw
       real(r8) :: eps7 = 1.e-7_r8
       character(len=dir_string_length) :: aerotab_table_dir
 
-      call oslo_getopts(aerotab_table_dir_out = aerotab_table_dir)
+      call get_aerotab_dir(aerotab_table_dir)
 
 !     Opening the 'lwkcomp'-files:
 

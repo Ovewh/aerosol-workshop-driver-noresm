@@ -14,7 +14,7 @@ module opttab
 !   condensation, coagulation or cloud-processing - Alf Kirkevaag, May 2016. 
 !   Modified cate values for kcomp=2 (as  in AeroTab) - Alf Kirkevaag October 2016.  
 
-#include <preprocessorDefinitions.h>
+!#include <preprocessorDefinitions.h>
 
   use shr_kind_mod, only: r8 => shr_kind_r8
   use cam_logfile,  only: iulog
@@ -72,7 +72,7 @@ module opttab
 
   real(r8), public :: e, eps
   parameter (e=2.718281828_r8, eps=1.0e-30_r8)
-  
+  integer, public :: dir_string_length=256  
 
  contains
 
@@ -100,7 +100,7 @@ subroutine initopt
       real(r8) :: eps3 = 1.e-3_r8
       real(r8) :: eps4 = 1.e-4_r8
       real(r8) :: eps6 = 1.e-6_r8
-      integer, parameter,public :: dir_string_length=256
+      integer, parameter :: dir_string_length=256
       character(len=dir_string_length) :: aerotab_table_dir
 
 !     Defining array bounds for tabulated optical parameters (and r and sigma) 
