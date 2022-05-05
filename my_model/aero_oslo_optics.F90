@@ -6,7 +6,7 @@
 !
 
 
-module my_model
+module aero_oslo_optics
 
   use aero_constants,                  only : rk => real_kind
   use aero_grid,                       only : grid_t
@@ -17,10 +17,10 @@ module my_model
   implicit none
   private
 
-  public :: my_model_t
+  public :: aero_oslo_t
 
   !> Aerosol model parameters
-  type, extends(model_t) :: my_model_t
+  type, extends(model_t) :: aero_oslo_t
     private
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !! Put here configuration data for your aerosol package, parameters !!
@@ -30,10 +30,7 @@ module my_model
     !! aerosol optical properties, as well as optical properties for    !!
     !! "mixed-type" aerosols.                                           !!
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !> NorESM2 uses 
-    integer, parameter :: pcols = 1
-    integer, parameter :: pver  = 1
-
+ 
     !> Optics grid in wave number [m-1]
     type(grid_t) :: grid_
     !> Aerosol optical depth [m]
@@ -42,30 +39,32 @@ module my_model
     real(kind=rk), allocatable :: omega_(:,:,:)
     !> Asymmetry parameter [-]
     real(kind=rk), allocatable :: g_(:,:,:)
+
+    
+
+    integer :: &
+              nmodes_,   & ! Number of modes
+              pver_,     & ! number of vertical levels
+              nbands_,   & ! number of bands
+              ncol_,     & ! number of columns
+              pcols_,    &
+              lchnk_,     &
+
+
   contains
     procedure :: name => model_name
     procedure :: create_state
     procedure :: optics_grid
     procedure :: compute_optics
-  end type my_model_t
-
+  end type aero_oslo_t
   !> Aerosol state specific to this model
-  type, extends(state_t) :: my_state_t
+  type, extends(state_t) :: aero_oslo_state_t
     private
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !! Put here state information for aerosols described by your aerosol      !!
-    !! package, properties of the aerosol system that vary during the course  !!
-    !! of a simulation.                                                       !!
-    !!                                                                        !!
-    !! In this simplified example, we track relative differences from         !!
-    !! measured averages of mixed-type aerosols for each grid cell from       !!
-    !! https://acp.copernicus.org/articles/18/7815/2018/acp-18-7815-2018.pdf  !!
-    !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    !> Normalized mixed-type aerosol
-    real(kind=rk), allocatable :: mixed_type_
-    !> Working array for calculating optical depths
-    real(kind=rk), allocatable :: od_work_(:)
-  end type my_state_t
+    real(kind=rk), allocatable :: Nnatk_(:,:,:) ! number concentration
+  end type aero_oslo_state_t
+
+
+
 
   interface my_model_t
     module procedure :: constructor
@@ -80,17 +79,18 @@ contains
 
     use aero_array,                    only : array_t
     use aero_util,                     only : assert_msg
+    use commondefinitions,             only : nmodes, nbmodes                         
 #ifdef AERO_USE_NETCDF
     use netcdf,                        only : nf90_open, nf90_close,          &
                                               NF90_NOWRITE, NF90_NOERR
 #endif
-    type(my_model_t), pointer    :: model
+    type(aero_oslo_t), pointer    :: model
     character(len=*), intent(in) :: description_file
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     !! Set parameters/configuration data for the aerosol package here !!
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
+    integer, parameter :: nCol = 1
     ! Initialize the aerosol grid with wavelength data pulled from
     ! https://acp.copernicus.org/articles/18/7815/2018/acp-18-7815-2018-f03.pdf
     real(kind=rk) :: wavelengths(4) = & ! [nm]
@@ -118,7 +118,11 @@ contains
 
     allocate( model )
     model%grid_ = grid_t( interfaces )
-
+    model%nmodes_ = nmodes
+    model%pver_ = 1
+    model%pcols_ = nCol 
+    model%lchnk_ = 1
+    model%nbands_ = 14
     ! Load the averaged optical properties from
     ! https://acp.copernicus.org/articles/18/7815/2018/acp-18-7815-2018-f03.pdf
     allocate( model%tau_(  model%pcols, model%pver ,interfaces%size()   ) )
@@ -141,9 +145,9 @@ contains
   function model_name( this )
 
     character(len=:), allocatable :: model_name
-    class(my_model_t), intent(in) :: this
+    class(aero_oslo_t), intent(in) :: this
 
-    model_name = "my model"
+    model_name = "aero oslo"
 
   end function model_name
 
