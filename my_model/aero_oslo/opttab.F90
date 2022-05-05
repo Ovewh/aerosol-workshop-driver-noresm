@@ -18,6 +18,7 @@ module opttab
 
   use shr_kind_mod, only: r8 => shr_kind_r8
   use cam_logfile,  only: iulog
+  use get_path
   implicit none
 
   private 
@@ -75,7 +76,7 @@ module opttab
 
  contains
 
-subroutine initopt(aerotab_table_dir)
+subroutine initopt
 
 !---------------------------------------------------------------
 !   Modified by Egil Storen/NoSerC July 2002.
@@ -100,7 +101,7 @@ subroutine initopt(aerotab_table_dir)
       real(r8) :: eps4 = 1.e-4_r8
       real(r8) :: eps6 = 1.e-6_r8
       integer, parameter,public :: dir_string_length=256
-      character(len=dir_string_length), intent(in) :: aerotab_table_dir
+      character(len=dir_string_length) :: aerotab_table_dir
 
 !     Defining array bounds for tabulated optical parameters (and r and sigma) 
 !     relative humidity (only 0 value used for r and sigma tables):
@@ -164,10 +165,9 @@ subroutine initopt(aerotab_table_dir)
           endif
         end do
       end do
-
-
+ 
 !     Opening the 'kcomp'-files:
-
+      call get_path(aerotab_table_dir)
 !ccccccccc1ccccccccc2ccccccccc3ccccccccc4ccccccccc5ccccccccc6ccccccccc7cc
 
       open(40,file=trim(aerotab_table_dir)//'/kcomp1.out' &

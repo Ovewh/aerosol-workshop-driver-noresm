@@ -60,6 +60,9 @@ contains
     integer ifbc1(pcols,pver,nbmodes)
     real(r8) xfaq(pcols,pver,nbmodes)
     integer ifaq1(pcols,pver,nbmodes)
+
+    call initopt
+
     ! Set local variables that are not used to zero
     do k=1,pver
       do icol=1,ncol
