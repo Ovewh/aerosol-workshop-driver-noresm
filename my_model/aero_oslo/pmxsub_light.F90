@@ -14,6 +14,8 @@ contains
     use opttab
     use opttab_lw
     use optinterpol, only: interpol5to10
+    use shr_kind_mod, only: r8 => shr_kind_r8
+    use commondefinitions
     ! input arguments
     ! TODO move files a own noresm directory and then include it in my model. Edit CMAKE sciprt
     integer, intent(in) :: lchnk 
@@ -42,13 +44,12 @@ contains
     real(r8) betot(pcols,pver,nbands)
     real(r8) ssatot(pcols,pver,nbands)
     real(r8) asymtot(pcols,pver,nbands) 
-    real(r8) deltah_km(pcols,pver) 
     real(r8) faqm(pcols,pver,nbmodes), fbcm(pcols,pver,nbmodes)
     real(r8) xrh(pcols,pver)
     real(r8) fnbc(pcols,pver), faitbc(pcols,pver), f_so4_cond(pcols,pver), &
     f_soa(pcols,pver),f_soana(pcols,pver), vnbc, vaitbc
     real(r8) xfbcbg(pcols,pver), xfbcbgn(pcols,pver), ifbcbgn1(pcols,pver)
-    real(r8) xfombg(pcols,pver), ifombg1(pcols,pver)
+    real(r8) xfombg(pcols,pver)
     real(r8) rhum(pcols,pver)       ! (trimmed) relative humidity for the aerosol calculations
     integer  irh1(pcols,pver)
     real(r8) focm(pcols,pver,4)
@@ -60,7 +61,15 @@ contains
     integer ifbc1(pcols,pver,nbmodes)
     real(r8) xfaq(pcols,pver,nbmodes)
     integer ifaq1(pcols,pver,nbmodes)
+    integer ifombg1(pcols,pver), ifbcbg1(pcols,pver)
 
+    real(r8) xct(pcols,pver,nmodes)
+    real(r8) ke(pcols,pver,0:nmodes,nbands)
+    real(r8) kalw(pcols,pver,0:nmodes,nlwbands)
+    real(r8) ssa(pcols,pver,0:nmodes,nbands), asym(pcols,pver,0:nmodes,nbands), & 
+            be(pcols,pver,0:nmodes,nbands)
+
+    logical, parameter :: lw_on=.false.  
     call initopt
 
     ! Set local variables that are not used to zero
