@@ -100,7 +100,7 @@ subroutine initopt
       real(r8) :: eps3 = 1.e-3_r8
       real(r8) :: eps4 = 1.e-4_r8
       real(r8) :: eps6 = 1.e-6_r8
-      integer, parameter :: dir_string_length=256
+      integer, parameter :: dir_string_length=64
       character(len=dir_string_length) :: aerotab_table_dir
 
 !     Defining array bounds for tabulated optical parameters (and r and sigma) 
@@ -169,7 +169,6 @@ subroutine initopt
 !     Opening the 'kcomp'-files:
       call get_aerotab_dir(aerotab_table_dir)
 !ccccccccc1ccccccccc2ccccccccc3ccccccccc4ccccccccc5ccccccccc6ccccccccc7cc
-
       open(40,file=trim(aerotab_table_dir)//'/kcomp1.out' &
              ,form='formatted',status='old')
       open(41,file=trim(aerotab_table_dir)//'/kcomp2.out' &
