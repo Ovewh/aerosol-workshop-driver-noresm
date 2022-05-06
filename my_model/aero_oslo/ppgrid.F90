@@ -30,10 +30,15 @@ module ppgrid
    integer pver       ! number of vertical levels
    integer pverp      ! pver + 1
 
-   parameter (pcols     = PCOLS)
-   parameter (psubcols  = PSUBCOLS)
-   parameter (pver      = PLEV)
-   parameter (pverp     = pver + 1  )
+   ! parameter (pcols     = PCOLS)
+   ! parameter (psubcols  = PSUBCOLS)
+   ! parameter (pver      = PLEV)
+   ! parameter (pverp     = pver + 1  )
+
+   parameter (pcols     = 1)
+   parameter (psubcols  = 1)
+   parameter (pver      = 1)
+   parameter (pverp     = 1 + 1  )
 !
 ! start, end indices for chunks owned by a given MPI task
 ! (set in phys_grid_init).

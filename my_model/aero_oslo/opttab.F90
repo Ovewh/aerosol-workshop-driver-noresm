@@ -167,7 +167,7 @@ subroutine initopt
       end do
  
 !     Opening the 'kcomp'-files:
-      call get_path(aerotab_table_dir)
+      call get_aerotab_dir(aerotab_table_dir)
 !ccccccccc1ccccccccc2ccccccccc3ccccccccc4ccccccccc5ccccccccc6ccccccccc7cc
 
       open(40,file=trim(aerotab_table_dir)//'/kcomp1.out' &

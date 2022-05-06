@@ -34,11 +34,11 @@ module aero_oslo_optics
     !> Optics grid in wave number [m-1]
     type(grid_t) :: grid_
     !> Aerosol optical depth [m]
-    real(kind=rk), allocatable :: tau_(:,:,:)
+    real(kind=rk), allocatable :: tau_(:)
     !> Single scattering albedo [-]
-    real(kind=rk), allocatable :: omega_(:,:,:)
+    real(kind=rk), allocatable :: omega_(:)
     !> Asymmetry parameter [-]
-    real(kind=rk), allocatable :: g_(:,:,:)
+    real(kind=rk), allocatable :: g_(:)
 
     
 
@@ -48,7 +48,7 @@ module aero_oslo_optics
               nbands_,   & ! number of bands
               ncol_,     & ! number of columns
               pcols_,    &
-              lchnk_,     &
+              lchnk_    
 
 
   contains
@@ -61,8 +61,7 @@ module aero_oslo_optics
   type, extends(state_t) :: aero_oslo_state_t
     private
     real(kind=rk), allocatable :: mixed_type_
-    real(kind=rk), allocatable :: od_work_(:)
-    real(kind=rk), allocatable :: Nnatk_(:,:,:) ! number concentration
+    !real(kind=rk), allocatable :: Nnatk_(:,:,:) ! number concentration
   end type aero_oslo_state_t
 
 
@@ -127,17 +126,13 @@ contains
     model%nbands_ = 14
     ! Load the averaged optical properties from
     ! https://acp.copernicus.org/articles/18/7815/2018/acp-18-7815-2018-f03.pdf
-    allocate( model%tau_(  model%pcols_, model%pver_ ,interfaces%size()   ) )
-    allocate( model%omega_( model%pcols_, model%pver_ ,interfaces%size()  ) )
-    allocate( model%g_(    model%pcols_, model%pver_ ,interfaces%size()  ) )
+    allocate( model%tau_(   interfaces%size()  ) )
+    allocate( model%omega_( interfaces%size()  ) )
+    allocate( model%g_(     interfaces%size()  ) )
     ! TODO: The wavelenghts need to match the ones used by pmxsub_light...
-    do k=1, model%pver_
-      do i=1, model%pcols_
-        model%tau_(i,k,:)   = (/ 0.27_rk,  0.35_rk,   0.5_rk, 0.75_rk /)
-        model%omega_(i,k,:) = (/ 0.88_rk, 0.895_rk, 0.905_rk, 0.88_rk /)
-        model%g_(i,k,:)     = (/  0.3_rk, 0.035_rk, 0.045_rk, 0.09_rk /)
-      end do
-    end do  
+    model%tau_(:)   = (/ 0.27_rk,  0.35_rk,   0.5_rk, 0.75_rk /)
+    model%omega_(:) = (/ 0.88_rk, 0.895_rk, 0.905_rk, 0.88_rk /)
+    model%g_(:)     = (/  0.3_rk, 0.035_rk, 0.045_rk, 0.09_rk /) 
   end function constructor
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -165,7 +160,6 @@ contains
     class is( aero_oslo_state_t )
 
       !! create a working array for use in calculating optical properties
-      allocate( state%od_work_( size( this%tau_ ) ) )
 
       !! Set some intial state (in a real simulation this would evolve over
       !! time)
@@ -196,6 +190,7 @@ contains
   subroutine compute_optics( this, state, od, od_ssa, od_asym )
 
     use aero_array,                    only : array_t
+    use aero_constants,                only : rk => real_kind
 
     !> My aerosol model
     class(aero_oslo_t), intent(inout) :: this
@@ -208,6 +203,13 @@ contains
     !> Aerosol asymmetric scattering optical depth [m]
     class(array_t),    intent(inout) :: od_asym
 
+    ! local variables:
+    real(rk) :: per_tau(this%pcols_, this%pver_, this%nbands_) ! aerosol extinction optical depth
+    real(rk) :: per_tau_w(this%pcols_, this%pver_, this%nbands_) ! aerosol single scattering albedo * tau
+    real(rk) :: per_tau_w_g(this%pcols_, this%pver_, this%nbands_) ! aerosol assymetry parameter * w * tau
+    real(rk) :: od_temp( this%nbands_ )
+    real(rk) :: Nnatk(this%pcols_, this%pver_, 0:this%nmodes_)
+
     select type( state )
     class is( aero_oslo_state_t )
 
@@ -216,7 +218,13 @@ contains
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
       ! aerosol optical depth
-      call pmxsub_light(this%lchnk_,this%pcols_,this%pver_,this%pcols_,state%Nnatk_,this%tau_, this%omega_, this%g_)
+      call pmxsub_light(this%lchnk_,this%pcols_,this%pver_,this%pcols_,Nnatk,per_tau, per_tau_w, per_tau_w_g)
+      od_temp=per_tau(1,1,:)
+      call od%copy_in(od_temp)
+      od_temp=per_tau_w(1,1,:)
+      call od_ssa%copy_in(od_temp)
+      od_temp=per_tau_w_g(1,1,:)
+      call od_asym%copy_in(od_temp)
 
     end select
 

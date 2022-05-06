@@ -17,7 +17,6 @@ contains
     use shr_kind_mod, only: r8 => shr_kind_r8
     use commondefinitions
     ! input arguments
-    ! TODO move files a own noresm directory and then include it in my model. Edit CMAKE sciprt
     integer, intent(in) :: lchnk 
     integer, intent(in) :: pver
     integer, intent(in) :: pcols
