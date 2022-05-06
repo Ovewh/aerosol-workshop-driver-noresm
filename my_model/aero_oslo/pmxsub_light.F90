@@ -17,6 +17,7 @@ contains
     use shr_kind_mod, only: r8 => shr_kind_r8
     use commondefinitions
     ! input arguments
+    implicit none
     integer, intent(in) :: lchnk 
     integer, intent(in) :: pver
     integer, intent(in) :: pcols
@@ -88,7 +89,6 @@ contains
 
       end do
     end do
-  
 
     do icol=1,ncol
       daylight(icol) = .true. 
@@ -99,6 +99,7 @@ contains
     f_soana, xfombg, ifombg1, faitbc, xfbcbg, ifbcbg1,  &
     fnbc, xfbcbgn, ifbcbgn1, Nnatk, Cam, xct, ict1,     &
     focm, fcm, xfac, ifac1, fbcm, xfbc, ifbc1, faqm, xfaq, ifaq1)
+    
 
     !ccccccccc1ccccccccc2ccccccccc3ccccccccc4ccccccccc5ccccccccc6ccccccccc7cc
 !     SW Optical properties of total aerosol:
@@ -136,12 +137,10 @@ contains
     end do
        
     !------------------------Get Optical Properties---------------------------------
-
     call interpol5to10 (lchnk, ncol, daylight, xrh, irh1, &
                           Nnatk, xct, ict1, xfac, ifac1, &
                           xfbc, ifbc1, xfaq, ifaq1, ssa, asym, be, ke, lw_on, kalw)
     
-
     do i=1,ncol  ! zero aerosol in the top layer
       do ib=1,14  ! initialize also for the other layers
         do k=1,pver
@@ -167,6 +166,5 @@ contains
           per_tau_w_g(i,k,ib)=per_tau_w(i,k,ib)*asymtot(i,k,ib)
         end do
     end do 
-
   end subroutine pmxsub_light
 end module pmxsub
