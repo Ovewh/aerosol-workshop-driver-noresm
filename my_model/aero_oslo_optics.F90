@@ -209,14 +209,25 @@ contains
     real(rk) :: per_tau_w_g(this%pcols_, this%pver_, this%nbands_) ! aerosol assymetry parameter * w * tau
     real(rk) :: od_temp( this%nbands_ )
     real(rk) :: Nnatk(this%pcols_, this%pver_, 0:this%nmodes_)
-
+    integer :: i,j,k
     select type( state )
     class is( aero_oslo_state_t )
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       !! Calculate optical properties for the current aerosol state here !!
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      do i=1, this%pcols_
+        do j=1, this%pver_
+          do k=0, this%nmodes_
+            if (k.eq.6) then
+              Nnatk(i,j,k) = state%mixed_type_ 
+            else
+              Nnatk(i,j,k) = 0.0
+            endif
 
+          end do 
+        end do
+      end do
       ! aerosol optical depth
       call pmxsub_light(this%lchnk_,this%pcols_,this%pver_,this%pcols_,Nnatk,per_tau, per_tau_w, per_tau_w_g)
       od_temp=per_tau(1,1,:)
