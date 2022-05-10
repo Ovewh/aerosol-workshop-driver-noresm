@@ -119,7 +119,7 @@ contains
       wave_numbers(i) = 1.0e-9_rk / wavelengths(15-i)
     end do
     interfaces => array_t( wave_numbers )
-
+    !print *, interfaces
     allocate( model )
     model%grid_ = grid_t( interfaces )
     model%nmodes_ = nmodes
@@ -132,21 +132,20 @@ contains
     allocate( model%tau_(   interfaces%size()  ) )
     allocate( model%omega_( interfaces%size()  ) )
     allocate( model%g_(     interfaces%size()  ) )
-    ! TODO: The wavelenghts need to match the ones used by pmxsub_light...
-    ! ! 14 3.846 12.195        14 
-! 1 3.077 3.846          13 
-! 2 2.500 3.077          12
-! 3 2.150 2.500          11
-! 4 1.942 2.150          10
-! 5 1.626 1.942           9
-! 6 1.299 1.626           8
-! 7 1.242 1.299           7
-! 8 0.778 1.242           6
-! 9 0.625 0.778           5
-! 10 0.442 0.625          4
-! 11 0.345 0.442          3
-! 12 0.263 0.345          2
-! 13 0.200 0.263          1
+    ! 14 3.846 12.195        14 
+    ! 1 3.077 3.846          13 
+    ! 2 2.500 3.077          12
+    ! 3 2.150 2.500          11
+    ! 4 1.942 2.150          10
+    ! 5 1.626 1.942           9
+    ! 6 1.299 1.626           8
+    ! 7 1.242 1.299           7
+    ! 8 0.778 1.242           6
+    ! 9 0.625 0.778           5
+    ! 10 0.442 0.625          4
+    ! 11 0.345 0.442          3
+    ! 12 0.263 0.345          2
+    ! 13 0.200 0.263          1
     model%tau_(:)   = (/ 0.263_rk, 0.345_rk,  0.442_rk, 0.625_rk,0.778_rk,& 
                         1.242_rk, 1.299_rk, 1.626_rk, 1.942_rk, 2.150_rk, &
                         2.500_rk, 3.077_rk,3.846_rk, 12.195_rk/)
@@ -186,7 +185,7 @@ contains
 
       !! Set some intial state (in a real simulation this would evolve over
       !! time)
-      state%mixed_type_ = 0.92_rk
+      state%mixed_type_ = 100000.0_rk
       
 
     end select
@@ -243,7 +242,7 @@ contains
       do i=1, this%pcols_
         do j=1, this%pver_
           do k=0, this%nmodes_
-            if (k.eq.6) then
+            if (k.eq.6.or.k.eq.7) then
               Nnatk(i,j,k) = state%mixed_type_ 
             else
               Nnatk(i,j,k) = 0.0_rk

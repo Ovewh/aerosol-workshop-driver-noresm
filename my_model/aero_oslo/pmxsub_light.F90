@@ -37,7 +37,7 @@ contains
 
 
     ! Local variables
-    integer  i, k, ib, icol
+    integer  i, k, ib, icol, iloop
 
     logical  daylight(pcols)
     real(r8) deltah_km(pcols,pver) 
@@ -77,15 +77,16 @@ contains
       do icol=1,ncol
         do ib=1,nbmodes
           Cam(icol,k,ib)=0.0_r8
-          fcm(icol,k,ib)=0.0_r8
-          faqm(icol,k,ib)=0.0_r8
-          fbcm(icol,k,ib)=0.0_r8
+          fcm(icol,k,ib)=0.00001_r8
+          faqm(icol,k,ib)=0.00001_r8
+          fbcm(icol,k,ib)=0.00001_r8
         end do
-        rhum(icol, k)=0.0_r8
-        fnbc(icol, k)=0.0_r8
-        faitbc(icol,k)=0.0_r8
-        f_soana(icol,k)=0.0_r8
-        rhum(icol, k)=0.0_r8
+        rhum(icol, k)=0.00001_r8
+        fnbc(icol, k)=0.00001_r8
+        faitbc(icol,k)=0.00001_r8
+        f_soana(icol,k)=0.00001_r8
+        rhum(icol, k)=0.995_r8
+        deltah_km(icol,k)=0.5_r8
 
       end do
     end do
@@ -94,12 +95,20 @@ contains
       daylight(icol) = .true. 
     end do
 
+    Nnatk(:ncol,:,:) = Nnatk(:ncol,:,:)*1.e-6_r8
+    cam(:ncol,:,:)=cam(:ncol,:,:)*1.e9_r8
 
     call inputForInterpol (lchnk, ncol, rhum, xrh, irh1,   &
     f_soana, xfombg, ifombg1, faitbc, xfbcbg, ifbcbg1,  &
     fnbc, xfbcbgn, ifbcbgn1, Nnatk, Cam, xct, ict1,     &
     focm, fcm, xfac, ifac1, fbcm, xfbc, ifbc1, faqm, xfaq, ifaq1)
     
+    do iloop=1,1   
+      !------------------------Get Optical Properties---------------------------------
+        call interpol5to10 (lchnk, ncol, daylight, xrh, irh1, &
+                            Nnatk, xct, ict1, xfac, ifac1, &
+                            xfbc, ifbc1, xfaq, ifaq1, ssa, asym, be, ke, lw_on, kalw)
+    end do
 
     !ccccccccc1ccccccccc2ccccccccc3ccccccccc4ccccccccc5ccccccccc6ccccccccc7cc
 !     SW Optical properties of total aerosol:
@@ -135,12 +144,15 @@ contains
       end do
       end do
     end do
-       
-    !------------------------Get Optical Properties---------------------------------
-    call interpol5to10 (lchnk, ncol, daylight, xrh, irh1, &
-                          Nnatk, xct, ict1, xfac, ifac1, &
-                          xfbc, ifbc1, xfaq, ifaq1, ssa, asym, be, ke, lw_on, kalw)
-    
+
+
+    do i=1,ncol  ! zero aerosol in the top layer
+      do ib=1,14 ! 1-nbands
+          per_tau(i,0,ib)= 0._r8
+          per_tau_w(i,0,ib)= 0.999_r8
+          per_tau_w_g(i,0,ib)= 0.5_r8
+      end do
+    end do
     do i=1,ncol  ! zero aerosol in the top layer
       do ib=1,14  ! initialize also for the other layers
         do k=1,pver
@@ -149,12 +161,12 @@ contains
           per_tau_w_g(i,k,ib)= 0.5_r8
         end do
       end do
-      end do
+    end do
   !      Remapping of SW wavelength bands from AeroTab to CAM5
       do i=1,ncol
       do ib=1,13
         do k=1,pver
-          per_tau(i,k,ib)=deltah_km(i,k)*betot(i,k,14-ib)
+          per_tau(i,k,ib)=deltah_km(i,k)*betot(i,k,14-ib)           
           per_tau_w(i,k,ib)=per_tau(i,k,ib)*max(min(ssatot(i,k,14-ib),0.999999_r8),1.e-6_r8)
           per_tau_w_g(i,k,ib)=per_tau_w(i,k,ib)*asymtot(i,k,14-ib)
         end do
