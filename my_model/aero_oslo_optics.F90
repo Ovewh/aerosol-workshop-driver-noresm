@@ -60,8 +60,7 @@ module aero_oslo_optics
   !> Aerosol state specific to this model
   type, extends(state_t) :: aero_oslo_state_t
     private
-    real(kind=rk), allocatable :: mixed_type_
-    real(kind=rk), allocatable :: od_work_(:)
+    real(kind=rk), allocatable :: number_conc_
     !real(kind=rk), allocatable :: Nnatk_(:,:,:) ! number concentration
   end type aero_oslo_state_t
 
@@ -127,34 +126,6 @@ contains
     model%pcols_ = nCol 
     model%lchnk_ = 1
     model%nbands_ = 14
-    ! Load the averaged optical properties from
-    ! https://acp.copernicus.org/articles/18/7815/2018/acp-18-7815-2018-f03.pdf
-    allocate( model%tau_(   interfaces%size()  ) )
-    allocate( model%omega_( interfaces%size()  ) )
-    allocate( model%g_(     interfaces%size()  ) )
-    ! 14 3.846 12.195        14 
-    ! 1 3.077 3.846          13 
-    ! 2 2.500 3.077          12
-    ! 3 2.150 2.500          11
-    ! 4 1.942 2.150          10
-    ! 5 1.626 1.942           9
-    ! 6 1.299 1.626           8
-    ! 7 1.242 1.299           7
-    ! 8 0.778 1.242           6
-    ! 9 0.625 0.778           5
-    ! 10 0.442 0.625          4
-    ! 11 0.345 0.442          3
-    ! 12 0.263 0.345          2
-    ! 13 0.200 0.263          1
-    model%tau_(:)   = (/ 0.263_rk, 0.345_rk,  0.442_rk, 0.625_rk,0.778_rk,& 
-                        1.242_rk, 1.299_rk, 1.626_rk, 1.942_rk, 2.150_rk, &
-                        2.500_rk, 3.077_rk,3.846_rk, 12.195_rk/)
-    model%omega_(:) = (/ 0.263_rk, 0.345_rk,  0.442_rk, 0.625_rk,0.778_rk,& 
-                          1.242_rk, 1.299_rk, 1.626_rk, 1.942_rk, 2.150_rk, &
-                            2.500_rk, 3.077_rk,3.846_rk, 12.195_rk/)
-    model%g_(:)     = (/ 0.263_rk, 0.345_rk,  0.442_rk, 0.625_rk,0.778_rk,& 
-                        1.242_rk, 1.299_rk, 1.626_rk, 1.942_rk, 2.150_rk, &
-                         2.500_rk, 3.077_rk,3.846_rk, 12.195_rk/)
   end function constructor
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -180,12 +151,11 @@ contains
     allocate( aero_oslo_state_t  :: state )
     select type( state )
     class is( aero_oslo_state_t )
-      allocate( state%od_work_( size( this%tau_ ) ) )
       !! create a working array for use in calculating optical properties
 
       !! Set some intial state (in a real simulation this would evolve over
       !! time)
-      state%mixed_type_ = 100000.0_rk
+      state%number_conc_ = 100000.0_rk
       
 
     end select
@@ -243,7 +213,7 @@ contains
         do j=1, this%pver_
           do k=0, this%nmodes_
             if (k.eq.6.or.k.eq.7) then
-              Nnatk(i,j,k) = state%mixed_type_ 
+              Nnatk(i,j,k) = state%number_conc_ 
             else
               Nnatk(i,j,k) = 0.0_rk
             endif
@@ -254,12 +224,12 @@ contains
       ! aerosol optical depth
       print *, 'calling pmxsub'
       call pmxsub_light(this%lchnk_,this%pcols_,this%pver_,this%pcols_,Nnatk,per_tau, per_tau_w, per_tau_w_g)
-      state%od_work_(:)=per_tau(1,1,:)
-      call od%copy_in(state%od_work_)
-      state%od_work_(:)=per_tau_w(1,1,:)
-      call od_ssa%copy_in(state%od_work_)
-      state%od_work_(:)=per_tau_w_g(1,1,:)
-      call od_asym%copy_in(state%od_work_)
+      !state%od_work_(:)=
+      call od%copy_in( per_tau(1,1,:) )
+      !state%od_work_(:)=per_tau_w(1,1,:)
+      call od_ssa%copy_in( per_tau_w(1,1,:) )
+      !state%od_work_(:)=per_tau_w_g(1,1,:)
+      call od_asym%copy_in( per_tau_w_g(1,1,:) )
 
     end select
 
