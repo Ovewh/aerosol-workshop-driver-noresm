@@ -95,9 +95,9 @@ contains
     ! Initialize the aerosol grid with wavelength data pulled from
     ! https://acp.copernicus.org/articles/18/7815/2018/acp-18-7815-2018-f03.pdf
     real(kind=rk) :: wavelengths(14) = & ! [nm]
-    (/ 0.263_rk, 0.345_rk,  0.442_rk, 0.625_rk,0.778_rk,& 
-    1.242_rk, 1.299_rk, 1.626_rk, 1.942_rk, 2.150_rk, &
-    2.500_rk, 3.077_rk,3.846_rk, 12.195_rk/)
+    (/ 200.0_rk, 263.0_rk, 345.0_rk ,442.0_rk, 625.0_rk,778.0_rk,& 
+    1242.0_rk, 1299.0_rk, 1626.0_rk, 1942.0_rk, 2150.0_rk, &
+    2500.0_rk, 3077.0_rk,3846.0_rk /)
     real(kind=rk) :: wave_numbers(14) ! [m-1]
     class(array_t), pointer :: interfaces
 
@@ -155,7 +155,7 @@ contains
 
       !! Set some intial state (in a real simulation this would evolve over
       !! time)
-      state%number_conc_ = 100000.0_rk
+      state%number_conc_ = 1.0e7_rk
       
 
     end select
@@ -171,7 +171,6 @@ contains
     type(grid_t) :: optics_grid
     !> My aerosol model
     class(aero_oslo_t), intent(in) :: this
-
     optics_grid = this%grid_%clone( )
 
   end function optics_grid
